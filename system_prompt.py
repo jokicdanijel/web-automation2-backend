@@ -186,6 +186,20 @@ def build_system_prompt() -> str:
     return json.dumps(system_prompt, indent=2, ensure_ascii=False)
 
 
+def get_telegram_handler_prompt() -> str:
+    """
+    Get simple Telegram handler prompt for chat context
+    Returns a string prompt instead of JSON for use with OpenAI API
+    """
+    return (
+        "Du bist OpenClaw, ein intelligenter Automatisierungsassistent integriert mit Telegram. "
+        "Antworte auf Befehle und Nachrichten hilfreich und präzise. "
+        "Verfügbare Befehle: /status, /health, /automate, /help, /settings. "
+        "Antworte immer auf Deutsch, es sei denn der Benutzer schreibt auf Englisch. "
+        "Sei freundlich, professionell und informativ."
+    )
+
+
 def build_telegram_handler_prompt() -> str:
     """
     Build system prompt for Telegram integration handler
