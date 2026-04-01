@@ -1,0 +1,949 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenClaw Dashboard 2.0</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #0066ff;
+            --primary-dark: #0052cc;
+            --success: #00b341;
+            --warning: #ff9500;
+            --danger: #ff3b30;
+            --bg-dark: #0f0f0f;
+            --bg-secondary: #1a1a1a;
+            --bg-tertiary: #2d2d2d;
+            --text-primary: #ffffff;
+            --text-secondary: #b0b0b0;
+            --border: #333333;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: 260px 1fr;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border);
+            padding: 1.5rem 0;
+            overflow-y: auto;
+        }
+
+        .sidebar-header {
+            padding: 0 1.5rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 1.5rem;
+        }
+
+        .sidebar-logo {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1.5rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s;
+            margin: 0 0.5rem;
+            border-radius: 0.375rem;
+        }
+
+        .nav-item:hover,
+        .nav-item.active {
+            background: var(--bg-tertiary);
+            color: var(--primary);
+        }
+
+        .main-content {
+            background: var(--bg-dark);
+            overflow-y: auto;
+        }
+
+        .header {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+            padding: 1.5rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 600;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+
+        .btn-secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        .btn-secondary:hover {
+            background: var(--border);
+        }
+
+        .content {
+            padding: 2rem;
+        }
+
+        .section {
+            display: none;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        .card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .card-title {
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .status-item {
+            background: var(--bg-tertiary);
+            padding: 1rem;
+            border-radius: 0.375rem;
+            border-left: 3px solid var(--primary);
+        }
+
+        .status-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            margin-bottom: 0.25rem;
+        }
+
+        .status-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
+            color: var(--text-secondary);
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.75rem;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 0.375rem;
+            color: var(--text-primary);
+            font-size: 0.875rem;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(0, 102, 255, 0.1);
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 0.375rem;
+            margin-bottom: 1rem;
+        }
+
+        .alert-success {
+            background: rgba(0, 179, 65, 0.1);
+            border: 1px solid var(--success);
+            color: var(--success);
+        }
+
+        .alert-error {
+            background: rgba(255, 59, 48, 0.1);
+            border: 1px solid var(--danger);
+            color: var(--danger);
+        }
+
+        .alert-info {
+            background: rgba(0, 102, 255, 0.1);
+            border: 1px solid var(--primary);
+            color: var(--primary);
+        }
+
+        .audio-recorder {
+            background: var(--bg-tertiary);
+            padding: 1.5rem;
+            border-radius: 0.375rem;
+            text-align: center;
+        }
+
+        .recorder-button {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: none;
+            background: var(--primary);
+            color: white;
+            font-size: 2rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin: 0 auto 1rem;
+        }
+
+        .recorder-button:hover {
+            background: var(--primary-dark);
+            transform: scale(1.05);
+        }
+
+        .recorder-button.recording {
+            background: var(--danger);
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .chat-container {
+            display: flex;
+            flex-direction: column;
+            height: 500px;
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            background: var(--bg-tertiary);
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .message {
+            display: flex;
+            gap: 0.75rem;
+            max-width: 80%;
+        }
+
+        .message.user {
+            align-self: flex-end;
+            flex-direction: row-reverse;
+        }
+
+        .message-bubble {
+            background: var(--bg-secondary);
+            padding: 0.75rem 1rem;
+            border-radius: 0.375rem;
+            word-wrap: break-word;
+        }
+
+        .message.user .message-bubble {
+            background: var(--primary);
+        }
+
+        .chat-input {
+            display: flex;
+            gap: 0.5rem;
+            padding: 1rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .chat-input input {
+            flex: 1;
+        }
+
+        .telegram-badge {
+            display: inline-block;
+            background: #0088cc;
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+            margin-left: 0.5rem;
+        }
+
+        .health-bar {
+            display: flex;
+            height: 8px;
+            background: var(--bg-tertiary);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 0.5rem;
+        }
+
+        .health-bar-fill {
+            background: var(--success);
+            transition: width 0.3s;
+        }
+
+        .health-bar-fill.warning {
+            background: var(--warning);
+        }
+
+        .health-bar-fill.danger {
+            background: var(--danger);
+        }
+
+        @media (max-width: 768px) {
+            .layout {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                display: none;
+            }
+
+            .status-grid {
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            }
+
+            .message {
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="layout">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">⚙️ OpenClaw</div>
+            </div>
+            
+            <div class="nav-item active" onclick="switchSection('dashboard')">📊 Dashboard</div>
+            <div class="nav-item" onclick="switchSection('automation')">🤖 Automation</div>
+            <div class="nav-item" onclick="switchSection('forms')">📋 Forms</div>
+            <div class="nav-item" onclick="switchSection('audio')">🔊 Audio & Speech</div>
+            <div class="nav-item" onclick="switchSection('telegram')">📱 Telegram</div>
+            <div class="nav-item" onclick="switchSection('health')">❤️ Health Monitor</div>
+            <div class="nav-item" onclick="switchSection('chat')">💬 Chat</div>
+            <div class="nav-item" onclick="switchSection('settings')">⚙️ Settings</div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Header -->
+            <div class="header">
+                <div class="header-title" id="page-title">Dashboard</div>
+                <div class="header-actions">
+                    <span id="status-indicator" style="display: inline-block; width: 8px; height: 8px; background: var(--success); border-radius: 50%; margin-right: 0.5rem;"></span>
+                    <span id="status-text" style="color: var(--text-secondary);">Connected</span>
+                </div>
+            </div>
+
+            <!-- Content Area -->
+            <div class="content">
+                <!-- Dashboard Section -->
+                <div id="dashboard" class="section active">
+                    <div class="status-grid">
+                        <div class="status-item">
+                            <div class="status-label">Uptime</div>
+                            <div class="status-value" id="uptime">--:--</div>
+                        </div>
+                        <div class="status-item">
+                            <div class="status-label">CPU Usage</div>
+                            <div class="status-value" id="cpu-usage">--</div>
+                            <div class="health-bar">
+                                <div class="health-bar-fill" id="cpu-bar" style="width: 0%;"></div>
+                            </div>
+                        </div>
+                        <div class="status-item">
+                            <div class="status-label">Memory Usage</div>
+                            <div class="status-value" id="memory-usage">--</div>
+                            <div class="health-bar">
+                                <div class="health-bar-fill" id="memory-bar" style="width: 0%;"></div>
+                            </div>
+                        </div>
+                        <div class="status-item">
+                            <div class="status-label">Disk Usage</div>
+                            <div class="status-value" id="disk-usage">--</div>
+                            <div class="health-bar">
+                                <div class="health-bar-fill" id="disk-bar" style="width: 0%;"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-title">Quick Actions</div>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem;">
+                            <button class="btn btn-primary" onclick="startAutomation()">▶️ Run Automation</button>
+                            <button class="btn btn-primary" onclick="switchSection('audio')">🎤 Voice Control</button>
+                            <button class="btn btn-secondary" onclick="refreshHealth()">🔄 Refresh Health</button>
+                            <button class="btn btn-secondary" onclick="exportLogs()">📥 Export Logs</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Automation Section -->
+                <div id="automation" class="section">
+                    <div class="card">
+                        <div class="card-title">🤖 Automation Workflow</div>
+                        <div class="form-group">
+                            <label class="form-label">Workflow JSON</label>
+                            <textarea class="form-input" id="automation-json" style="height: 200px; font-family: monospace;">{"steps":[{"action":"navigate","url":"https://example.com"}]}</textarea>
+                        </div>
+                        <button class="btn btn-primary" onclick="executeAutomation()">Execute Workflow</button>
+                    </div>
+                    <div id="automation-result" class="card" style="display: none;">
+                        <div class="card-title">Result</div>
+                        <div id="automation-output" style="font-family: monospace; white-space: pre-wrap; word-break: break-all;"></div>
+                    </div>
+                </div>
+
+                <!-- Forms Section -->
+                <div id="forms" class="section">
+                    <div class="card">
+                        <div class="card-title">📋 Form Automation</div>
+                        <div class="form-group">
+                            <label class="form-label">Action</label>
+                            <select class="form-input" id="form-action">
+                                <option value="detect">Detect Forms</option>
+                                <option value="fill">Fill Form</option>
+                                <option value="submit">Submit Form</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Form Selector</label>
+                            <input type="text" class="form-input" id="form-selector" placeholder="e.g., #my-form, form.login">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Field Data (JSON)</label>
+                            <textarea class="form-input" id="form-data" style="height: 120px; font-family: monospace;">{"name":"John Doe","email":"john@example.com"}</textarea>
+                        </div>
+                        <button class="btn btn-primary" onclick="executeFormAction()">Execute</button>
+                    </div>
+                </div>
+
+                <!-- Audio & Speech Section -->
+                <div id="audio" class="section">
+                    <div class="card">
+                        <div class="card-title">🔊 Text-to-Speech</div>
+                        <div class="form-group">
+                            <label class="form-label">Text</label>
+                            <textarea class="form-input" id="tts-text" placeholder="Enter text to convert to speech">Hello, this is a test message.</textarea>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Language</label>
+                            <select class="form-input" id="tts-language">
+                                <option value="en-US">English (US)</option>
+                                <option value="de-DE">Deutsch</option>
+                                <option value="fr-FR">Français</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-primary" onclick="synthesizeSpeech()">🔊 Synthesize</button>
+                        <div id="tts-player" style="margin-top: 1rem; display: none;">
+                            <audio controls style="width: 100%;"></audio>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-title">🎤 Speech-to-Text</div>
+                        <div class="audio-recorder">
+                            <button class="recorder-button" id="recorder-btn" onclick="toggleRecording()">🎤</button>
+                            <div id="recorder-status" style="color: var(--text-secondary);">Click to start recording</div>
+                            <div id="recorder-time" style="margin-top: 0.5rem; font-size: 0.875rem; color: var(--text-tertiary);">00:00</div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Transcription</label>
+                            <textarea class="form-input" id="transcription-result" readonly style="height: 100px;"></textarea>
+                        </div>
+                        <div id="transcription-confidence" style="color: var(--text-secondary); font-size: 0.875rem;"></div>
+                    </div>
+                </div>
+
+                <!-- Telegram Section -->
+                <div id="telegram" class="section">
+                    <div class="card">
+                        <div class="card-title">📱 Telegram Integration <span class="telegram-badge">Connected</span></div>
+                        <div class="alert alert-info">Telegram Bot Status: Active</div>
+                        <div class="form-group">
+                            <label class="form-label">Bot Token</label>
+                            <input type="password" class="form-input" id="telegram-token" placeholder="Your bot token">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Chat ID</label>
+                            <input type="text" class="form-input" id="telegram-chat-id" placeholder="Telegram chat ID">
+                        </div>
+                        <button class="btn btn-primary" onclick="testTelegram()">Test Connection</button>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-title">Send Message</div>
+                        <div class="form-group">
+                            <label class="form-label">Message</label>
+                            <textarea class="form-input" id="telegram-message" placeholder="Your message here..."></textarea>
+                        </div>
+                        <button class="btn btn-primary" onclick="sendTelegramMessage()">Send Message</button>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-title">Recent Notifications</div>
+                        <div id="telegram-log" style="font-size: 0.875rem; color: var(--text-secondary); max-height: 200px; overflow-y: auto;">
+                            <div>No notifications yet</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Health Monitor Section -->
+                <div id="health" class="section">
+                    <div class="status-grid">
+                        <div class="status-item">
+                            <div class="status-label">CPU</div>
+                            <div class="status-value" id="health-cpu">--</div>
+                            <div class="health-bar">
+                                <div class="health-bar-fill" id="health-cpu-bar" style="width: 0%;"></div>
+                            </div>
+                        </div>
+                        <div class="status-item">
+                            <div class="status-label">Memory</div>
+                            <div class="status-value" id="health-memory">--</div>
+                            <div class="health-bar">
+                                <div class="health-bar-fill" id="health-memory-bar" style="width: 0%;"></div>
+                            </div>
+                        </div>
+                        <div class="status-item">
+                            <div class="status-label">Disk</div>
+                            <div class="status-value" id="health-disk">--</div>
+                            <div class="health-bar">
+                                <div class="health-bar-fill" id="health-disk-bar" style="width: 0%;"></div>
+                            </div>
+                        </div>
+                        <div class="status-item">
+                            <div class="status-label">Network</div>
+                            <div class="status-value" id="health-network">--</div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-title">Service Status</div>
+                        <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span>Dashboard API</span>
+                                <span style="width: 8px; height: 8px; background: var(--success); border-radius: 50%;"></span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span>Automation Worker</span>
+                                <span style="width: 8px; height: 8px; background: var(--success); border-radius: 50%;"></span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span>Telegram Handler</span>
+                                <span style="width: 8px; height: 8px; background: var(--success); border-radius: 50%;"></span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span>Audio Service</span>
+                                <span style="width: 8px; height: 8px; background: var(--success); border-radius: 50%;"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-title">Alerts & Logs</div>
+                        <div id="health-alerts" style="font-size: 0.875rem; max-height: 250px; overflow-y: auto;">
+                            <div style="color: var(--text-secondary);">No alerts</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chat Section -->
+                <div id="chat" class="section">
+                    <div class="card">
+                        <div class="chat-container">
+                            <div class="chat-messages" id="chat-messages">
+                                <div class="message">
+                                    <div class="message-bubble">Hello! I'm OpenClaw. How can I help you?</div>
+                                </div>
+                            </div>
+                            <div class="chat-input">
+                                <input type="text" class="form-input" id="chat-input" placeholder="Type your message..." onkeypress="handleChatKeypress(event)">
+                                <button class="btn btn-primary" onclick="sendChatMessage()">Send</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Settings Section -->
+                <div id="settings" class="section">
+                    <div class="card">
+                        <div class="card-title">⚙️ Settings</div>
+                        <div class="form-group">
+                            <label class="form-label">API Key</label>
+                            <input type="password" class="form-input" id="api-key" placeholder="Your API key">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Server URL</label>
+                            <input type="text" class="form-input" id="server-url" value="http://localhost:5000">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Theme</label>
+                            <select class="form-input" id="theme-select">
+                                <option value="dark">Dark</option>
+                                <option value="light">Light</option>
+                                <option value="auto">Auto</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-primary" onclick="saveSettings()">Save Settings</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const config = {
+            apiUrl: localStorage.getItem('server-url') || 'http://localhost:5000',
+            apiKey: localStorage.getItem('api-key') || '',
+            language: localStorage.getItem('language') || 'en-US'
+        };
+
+        let mediaRecorder;
+        let audioChunks = [];
+        let recordingStartTime = 0;
+        let recordingInterval;
+
+        // Section switching
+        function switchSection(sectionId) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.getElementById(sectionId).classList.add('active');
+            
+            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            const titles = {
+                dashboard: 'Dashboard',
+                automation: 'Automation',
+                forms: 'Form Automation',
+                audio: 'Audio & Speech',
+                telegram: 'Telegram',
+                health: 'Health Monitor',
+                chat: 'Chat',
+                settings: 'Settings'
+            };
+            document.getElementById('page-title').textContent = titles[sectionId] || 'Dashboard';
+        }
+
+        // Update health metrics
+        async function updateHealth() {
+            try {
+                const response = await fetch(`${config.apiUrl}/api/health`, {
+                    headers: { 'Authorization': `Bearer ${config.apiKey}` }
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    updateHealthBars(data.metrics);
+                }
+            } catch (error) {
+                console.error('[v0] Health update error:', error);
+            }
+        }
+
+        function updateHealthBars(metrics) {
+            const items = [
+                { id: 'cpu', metric: metrics.cpu },
+                { id: 'memory', metric: metrics.memory },
+                { id: 'disk', metric: metrics.disk }
+            ];
+
+            items.forEach(item => {
+                const value = Math.round(item.metric.percentage);
+                document.getElementById(`health-${item.id}`).textContent = value + '%';
+                document.getElementById(`health-${item.id}-bar`).style.width = value + '%';
+                
+                const bar = document.getElementById(`health-${item.id}-bar`);
+                bar.classList.remove('warning', 'danger');
+                if (value > 85) bar.classList.add('danger');
+                else if (value > 70) bar.classList.add('warning');
+            });
+        }
+
+        // Execute automation
+        async function executeAutomation() {
+            try {
+                const workflow = JSON.parse(document.getElementById('automation-json').value);
+                const response = await fetch(`${config.apiUrl}/api/automation`, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${config.apiKey}`
+                    },
+                    body: JSON.stringify(workflow)
+                });
+                const result = await response.json();
+                
+                document.getElementById('automation-result').style.display = 'block';
+                document.getElementById('automation-output').textContent = JSON.stringify(result, null, 2);
+            } catch (error) {
+                alert('Error executing automation: ' + error.message);
+            }
+        }
+
+        // Form automation
+        async function executeFormAction() {
+            try {
+                const action = document.getElementById('form-action').value;
+                const selector = document.getElementById('form-selector').value;
+                const data = JSON.parse(document.getElementById('form-data').value);
+                
+                const response = await fetch(`${config.apiUrl}/api/form-automate`, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${config.apiKey}`
+                    },
+                    body: JSON.stringify({ action, selector, ...data })
+                });
+                const result = await response.json();
+                alert(result.message || 'Form action completed');
+            } catch (error) {
+                alert('Error executing form action: ' + error.message);
+            }
+        }
+
+        // Text-to-Speech
+        async function synthesizeSpeech() {
+            try {
+                const text = document.getElementById('tts-text').value;
+                const language = document.getElementById('tts-language').value;
+                
+                const response = await fetch(`${config.apiUrl}/api/text-to-speech`, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${config.apiKey}`
+                    },
+                    body: JSON.stringify({ text, language, returnBase64: true })
+                });
+                const result = await response.json();
+                
+                if (result.audioData) {
+                    const audio = document.querySelector('#tts-player audio');
+                    audio.src = result.dataUrl;
+                    document.getElementById('tts-player').style.display = 'block';
+                }
+            } catch (error) {
+                alert('Error synthesizing speech: ' + error.message);
+            }
+        }
+
+        // Speech-to-Text
+        async function toggleRecording() {
+            const btn = document.getElementById('recorder-btn');
+            
+            if (mediaRecorder && mediaRecorder.state === 'recording') {
+                mediaRecorder.stop();
+                btn.classList.remove('recording');
+                clearInterval(recordingInterval);
+                return;
+            }
+
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream);
+                audioChunks = [];
+                
+                mediaRecorder.ondataavailable = (e) => audioChunks.push(e.data);
+                mediaRecorder.onstop = () => processAudioRecording();
+                
+                mediaRecorder.start();
+                btn.classList.add('recording');
+                document.getElementById('recorder-status').textContent = 'Recording...';
+                
+                recordingStartTime = Date.now();
+                recordingInterval = setInterval(() => {
+                    const elapsed = Math.floor((Date.now() - recordingStartTime) / 1000);
+                    document.getElementById('recorder-time').textContent = 
+                        `${Math.floor(elapsed / 60).toString().padStart(2, '0')}:${(elapsed % 60).toString().padStart(2, '0')}`;
+                }, 100);
+            } catch (error) {
+                alert('Microphone access denied: ' + error.message);
+            }
+        }
+
+        async function processAudioRecording() {
+            const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+            const reader = new FileReader();
+            
+            reader.onload = async () => {
+                const base64Audio = reader.result.split(',')[1];
+                
+                try {
+                    const response = await fetch(`${config.apiUrl}/api/speech-to-text`, {
+                        method: 'POST',
+                        headers: { 
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${config.apiKey}`
+                        },
+                        body: JSON.stringify({ 
+                            audio: base64Audio,
+                            audioFormat: 'wav',
+                            language: config.language
+                        })
+                    });
+                    const result = await response.json();
+                    
+                    if (result.transcription) {
+                        document.getElementById('transcription-result').value = result.transcription;
+                        if (result.confidence) {
+                            document.getElementById('transcription-confidence').textContent = 
+                                `Confidence: ${(result.confidence * 100).toFixed(0)}%`;
+                        }
+                    }
+                } catch (error) {
+                    alert('Error transcribing audio: ' + error.message);
+                }
+                
+                document.getElementById('recorder-status').textContent = 'Click to start recording';
+                document.getElementById('recorder-time').textContent = '00:00';
+            };
+            
+            reader.readAsDataURL(audioBlob);
+        }
+
+        // Chat
+        function sendChatMessage() {
+            const input = document.getElementById('chat-input');
+            const message = input.value.trim();
+            if (!message) return;
+            
+            const messagesDiv = document.getElementById('chat-messages');
+            const userMsg = document.createElement('div');
+            userMsg.className = 'message user';
+            userMsg.innerHTML = `<div class="message-bubble">${message}</div>`;
+            messagesDiv.appendChild(userMsg);
+            
+            input.value = '';
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            
+            // Simulate AI response
+            setTimeout(() => {
+                const aiMsg = document.createElement('div');
+                aiMsg.className = 'message';
+                aiMsg.innerHTML = `<div class="message-bubble">Processing: ${message}</div>`;
+                messagesDiv.appendChild(aiMsg);
+                messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            }, 500);
+        }
+
+        function handleChatKeypress(event) {
+            if (event.key === 'Enter') sendChatMessage();
+        }
+
+        // Telegram
+        function testTelegram() {
+            alert('Testing Telegram connection...');
+        }
+
+        function sendTelegramMessage() {
+            const message = document.getElementById('telegram-message').value;
+            if (!message) return;
+            
+            const log = document.getElementById('telegram-log');
+            const entry = document.createElement('div');
+            entry.textContent = `[${new Date().toLocaleTimeString()}] Sent: ${message}`;
+            log.insertBefore(entry, log.firstChild);
+            document.getElementById('telegram-message').value = '';
+        }
+
+        // Settings
+        function saveSettings() {
+            localStorage.setItem('server-url', document.getElementById('server-url').value);
+            localStorage.setItem('api-key', document.getElementById('api-key').value);
+            alert('Settings saved!');
+        }
+
+        function refreshHealth() {
+            updateHealth();
+            alert('Health data refreshed');
+        }
+
+        function startAutomation() {
+            switchSection('automation');
+        }
+
+        function exportLogs() {
+            alert('Exporting logs...');
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('api-key').value = config.apiKey;
+            document.getElementById('server-url').value = config.apiUrl;
+            updateHealth();
+            setInterval(updateHealth, 5000);
+        });
+    </script>
+</body>
+</html>
