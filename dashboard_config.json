@@ -1,0 +1,298 @@
+{
+  "dashboard": {
+    "theme": "dark_cockpit",
+    "title": "OpenClaw Command Center",
+    "layout": "unified",
+    "logo": {
+      "src": "/images/openclaw-logo.svg",
+      "alt": "OpenClaw",
+      "size": "small",
+      "position": "top_left"
+    },
+    "colors": {
+      "primary": "#00ff00",
+      "secondary": "#00cc00",
+      "accent": "#ff6600",
+      "background": "#0a0e27",
+      "surface": "#141a2f",
+      "danger": "#ff3333",
+      "warning": "#ffaa00",
+      "success": "#00ff00",
+      "info": "#00ccff",
+      "text_primary": "#ffffff",
+      "text_secondary": "#aaaaaa",
+      "border": "#1a2540"
+    },
+    "typography": {
+      "font_family": "JetBrains Mono, Courier New, monospace",
+      "heading_size": "1.8rem",
+      "subheading_size": "1.2rem",
+      "body_size": "0.95rem",
+      "small_size": "0.85rem"
+    },
+    "sections": [
+      {
+        "id": "header",
+        "title": "Header",
+        "type": "fixed",
+        "height": "80px",
+        "components": ["logo", "title", "status_indicator"]
+      },
+      {
+        "id": "instrument_panel",
+        "title": "Instrument Panel",
+        "type": "dashboard",
+        "grid_cols": 4,
+        "instruments": [
+          {
+            "id": "cpu_gauge",
+            "name": "CPU Usage",
+            "type": "gauge",
+            "min": 0,
+            "max": 100,
+            "unit": "%",
+            "threshold_warning": 70,
+            "threshold_danger": 90
+          },
+          {
+            "id": "memory_gauge",
+            "name": "Memory Usage",
+            "type": "gauge",
+            "min": 0,
+            "max": 100,
+            "unit": "%",
+            "threshold_warning": 75,
+            "threshold_danger": 95
+          },
+          {
+            "id": "disk_gauge",
+            "name": "Disk Usage",
+            "type": "gauge",
+            "min": 0,
+            "max": 100,
+            "unit": "%",
+            "threshold_warning": 80,
+            "threshold_danger": 95
+          },
+          {
+            "id": "network_gauge",
+            "name": "Network Latency",
+            "type": "gauge",
+            "min": 0,
+            "max": 500,
+            "unit": "ms",
+            "threshold_warning": 300,
+            "threshold_danger": 500
+          }
+        ]
+      },
+      {
+        "id": "status_panel",
+        "title": "System Status",
+        "type": "grid",
+        "grid_cols": 3,
+        "items": [
+          {
+            "id": "uptime",
+            "name": "System Uptime",
+            "type": "metric",
+            "icon": "⏱️"
+          },
+          {
+            "id": "request_count",
+            "name": "Requests",
+            "type": "metric",
+            "icon": "📊"
+          },
+          {
+            "id": "error_rate",
+            "name": "Error Rate",
+            "type": "metric",
+            "icon": "⚠️"
+          },
+          {
+            "id": "bot_status",
+            "name": "Telegram Bot",
+            "type": "status_badge",
+            "icon": "📱"
+          },
+          {
+            "id": "browser_status",
+            "name": "Browser Automation",
+            "type": "status_badge",
+            "icon": "🌐"
+          },
+          {
+            "id": "audio_status",
+            "name": "Audio Pipeline",
+            "type": "status_badge",
+            "icon": "🔊"
+          }
+        ]
+      },
+      {
+        "id": "automation_panel",
+        "title": "Automation Control",
+        "type": "control_panel",
+        "controls": [
+          {
+            "id": "automation_action",
+            "name": "Start Automation",
+            "type": "button",
+            "color": "success",
+            "handler": "startAutomation",
+            "endpoint": "/api/automation/start"
+          },
+          {
+            "id": "form_detect",
+            "name": "Detect Forms",
+            "type": "button",
+            "color": "info",
+            "handler": "detectForms",
+            "endpoint": "/api/form-automate/detect"
+          },
+          {
+            "id": "bot_chat",
+            "name": "Bot Chat",
+            "type": "button",
+            "color": "primary",
+            "handler": "openChat",
+            "endpoint": "/api/chat"
+          }
+        ]
+      },
+      {
+        "id": "metrics_chart",
+        "title": "Performance Metrics",
+        "type": "chart",
+        "chart_type": "line",
+        "metrics": ["cpu_usage", "memory_usage", "request_rate"],
+        "time_range": "1h"
+      },
+      {
+        "id": "components_status",
+        "title": "Components Health",
+        "type": "grid",
+        "grid_cols": 2,
+        "items": [
+          {
+            "id": "telegram_bot",
+            "name": "Telegram Bot",
+            "type": "component_card",
+            "health_check_endpoint": "/api/health/telegram"
+          },
+          {
+            "id": "browser_automation",
+            "name": "Browser Automation",
+            "type": "component_card",
+            "health_check_endpoint": "/api/health/browser"
+          },
+          {
+            "id": "audio_pipeline",
+            "name": "Audio Pipeline",
+            "type": "component_card",
+            "health_check_endpoint": "/api/health/audio"
+          },
+          {
+            "id": "form_handler",
+            "name": "Form Handler",
+            "type": "component_card",
+            "health_check_endpoint": "/api/health/form"
+          }
+        ]
+      },
+      {
+        "id": "activity_log",
+        "title": "Activity Log",
+        "type": "log_viewer",
+        "log_level": "info",
+        "max_entries": 100,
+        "auto_scroll": true
+      },
+      {
+        "id": "community",
+        "title": "Community & Support",
+        "type": "community_panel",
+        "items": [
+          {
+            "id": "docs",
+            "name": "Documentation",
+            "icon": "📖",
+            "url": "/docs"
+          },
+          {
+            "id": "github",
+            "name": "GitHub Repository",
+            "icon": "🐙",
+            "url": "https://github.com/jokicdanijel/web-automation2-backend"
+          },
+          {
+            "id": "issues",
+            "name": "Report Issue",
+            "icon": "🐛",
+            "url": "/issues"
+          },
+          {
+            "id": "community_chat",
+            "name": "Community Chat",
+            "icon": "💬",
+            "handler": "openCommunityChat"
+          }
+        ]
+      }
+    ],
+    "handlers": {
+      "startAutomation": {
+        "method": "POST",
+        "endpoint": "/api/automation/start",
+        "headers": {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer ${API_KEY}"
+        },
+        "body": {
+          "workflow": "default"
+        },
+        "success_message": "Automation started successfully",
+        "error_message": "Failed to start automation"
+      },
+      "detectForms": {
+        "method": "POST",
+        "endpoint": "/api/form-automate/detect",
+        "headers": {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer ${API_KEY}"
+        },
+        "body": {
+          "page_url": "${current_url}"
+        },
+        "success_message": "Forms detected",
+        "error_message": "Failed to detect forms"
+      },
+      "openChat": {
+        "method": "GET",
+        "handler": "showChatModal",
+        "action": "modal_open"
+      },
+      "openCommunityChat": {
+        "method": "GET",
+        "handler": "showCommunityPanel",
+        "action": "panel_open"
+      }
+    },
+    "refresh_intervals": {
+      "metrics": 2000,
+      "status": 5000,
+      "logs": 1000,
+      "performance": 3000
+    },
+    "api_base_url": "http://localhost:3000",
+    "websocket_url": "ws://localhost:3000",
+    "settings": {
+      "dark_mode": true,
+      "auto_refresh": true,
+      "sound_notifications": true,
+      "email_alerts": false,
+      "history_retention_days": 30
+    }
+  }
+}

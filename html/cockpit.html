@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenClaw Command Center - Cockpit Dashboard</title>
+    <link rel="stylesheet" href="css/cockpit.css">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body class="cockpit-dashboard">
+    <!-- Header with Logo -->
+    <header class="cockpit-header">
+        <div class="header-left">
+            <img src="images/openclaw-logo.png" alt="OpenClaw" class="logo">
+            <h1 class="system-title">OpenClaw Command Center</h1>
+        </div>
+        <div class="header-center">
+            <div class="status-indicator">
+                <span class="status-dot active"></span>
+                <span class="status-text">SYSTEM ONLINE</span>
+            </div>
+        </div>
+        <div class="header-right">
+            <span class="timestamp" id="current-time">--:--:--</span>
+            <button class="btn-settings">⚙️</button>
+        </div>
+    </header>
+
+    <!-- Main Cockpit -->
+    <main class="cockpit-main">
+        <!-- Left Instrument Panel -->
+        <section class="instrument-panel left-panel">
+            <h2 class="panel-title">SYSTEM METRICS</h2>
+            
+            <!-- CPU Gauge -->
+            <div class="instrument cpu-instrument">
+                <div class="gauge-container">
+                    <canvas id="cpu-gauge" class="gauge-canvas"></canvas>
+                    <div class="gauge-value">
+                        <span class="value" id="cpu-value">45</span>
+                        <span class="unit">%</span>
+                    </div>
+                </div>
+                <p class="instrument-label">CPU USAGE</p>
+                <div class="instrument-bar">
+                    <div class="bar-fill" id="cpu-bar" style="width: 45%"></div>
+                </div>
+            </div>
+
+            <!-- Memory Gauge -->
+            <div class="instrument memory-instrument">
+                <div class="gauge-container">
+                    <canvas id="memory-gauge" class="gauge-canvas"></canvas>
+                    <div class="gauge-value">
+                        <span class="value" id="memory-value">62</span>
+                        <span class="unit">%</span>
+                    </div>
+                </div>
+                <p class="instrument-label">MEMORY USAGE</p>
+                <div class="instrument-bar">
+                    <div class="bar-fill" id="memory-bar" style="width: 62%"></div>
+                </div>
+            </div>
+
+            <!-- Disk Gauge -->
+            <div class="instrument disk-instrument">
+                <div class="gauge-container">
+                    <canvas id="disk-gauge" class="gauge-canvas"></canvas>
+                    <div class="gauge-value">
+                        <span class="value" id="disk-value">38</span>
+                        <span class="unit">%</span>
+                    </div>
+                </div>
+                <p class="instrument-label">DISK USAGE</p>
+                <div class="instrument-bar">
+                    <div class="bar-fill" id="disk-bar" style="width: 38%"></div>
+                </div>
+            </div>
+
+            <!-- Network Latency -->
+            <div class="instrument network-instrument">
+                <div class="gauge-container">
+                    <canvas id="network-gauge" class="gauge-canvas"></canvas>
+                    <div class="gauge-value">
+                        <span class="value" id="network-value">12</span>
+                        <span class="unit">ms</span>
+                    </div>
+                </div>
+                <p class="instrument-label">LATENCY</p>
+                <div class="instrument-bar">
+                    <div class="bar-fill" id="network-bar" style="width: 12%"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Center Control Panel -->
+        <section class="control-panel center-panel">
+            <h2 class="panel-title">SYSTEM STATUS</h2>
+            
+            <!-- Status Cards -->
+            <div class="status-grid">
+                <div class="status-card uptime">
+                    <div class="card-header">UPTIME</div>
+                    <div class="card-value" id="uptime-value">24d 12h 45m</div>
+                    <div class="card-subtext">System operational</div>
+                </div>
+                <div class="status-card requests">
+                    <div class="card-header">REQUESTS</div>
+                    <div class="card-value" id="request-value">15.2K</div>
+                    <div class="card-subtext">Total processed</div>
+                </div>
+                <div class="status-card errors">
+                    <div class="card-header">ERROR RATE</div>
+                    <div class="card-value" id="error-value">0.3%</div>
+                    <div class="card-subtext">Low priority</div>
+                </div>
+            </div>
+
+            <!-- Component Status -->
+            <h2 class="panel-title">COMPONENTS</h2>
+            <div class="components-grid">
+                <div class="component-badge telegram-bot">
+                    <span class="status-dot active"></span>
+                    <span class="component-name">Telegram Bot</span>
+                    <span class="health-percent" id="telegram-health">99.2%</span>
+                </div>
+                <div class="component-badge browser-auto">
+                    <span class="status-dot active"></span>
+                    <span class="component-name">Browser Auto</span>
+                    <span class="health-percent" id="browser-health">98.5%</span>
+                </div>
+                <div class="component-badge audio-pipe">
+                    <span class="status-dot active"></span>
+                    <span class="component-name">Audio Pipeline</span>
+                    <span class="health-percent" id="audio-health">99.8%</span>
+                </div>
+                <div class="component-badge form-handler">
+                    <span class="status-dot active"></span>
+                    <span class="component-name">Form Handler</span>
+                    <span class="health-percent" id="form-health">97.2%</span>
+                </div>
+            </div>
+
+            <!-- Control Buttons -->
+            <h2 class="panel-title">CONTROLS</h2>
+            <div class="control-buttons">
+                <button class="btn-control btn-primary" id="btn-automation">▶ START AUTOMATION</button>
+                <button class="btn-control btn-info" id="btn-detect-forms">📋 DETECT FORMS</button>
+                <button class="btn-control btn-success" id="btn-chat">💬 BOT CHAT</button>
+                <button class="btn-control btn-warning" id="btn-health-check">🏥 HEALTH CHECK</button>
+            </div>
+        </section>
+
+        <!-- Right Monitor Panel -->
+        <section class="monitor-panel right-panel">
+            <h2 class="panel-title">ACTIVITY MONITOR</h2>
+            
+            <!-- Real-time Metrics Chart -->
+            <div class="chart-container">
+                <canvas id="metrics-chart" class="chart-canvas"></canvas>
+            </div>
+
+            <!-- Activity Log -->
+            <div class="activity-log" id="activity-log">
+                <div class="log-entry info">
+                    <span class="log-time">10:30:42</span>
+                    <span class="log-message">System initialized</span>
+                </div>
+                <div class="log-entry success">
+                    <span class="log-time">10:30:45</span>
+                    <span class="log-message">All components online</span>
+                </div>
+                <div class="log-entry info">
+                    <span class="log-time">10:31:00</span>
+                    <span class="log-message">Metrics updated</span>
+                </div>
+            </div>
+
+            <!-- Community Panel -->
+            <h2 class="panel-title">COMMUNITY</h2>
+            <div class="community-links">
+                <a href="/docs" class="community-link">📖 Documentation</a>
+                <a href="https://github.com" class="community-link">🐙 GitHub</a>
+                <a href="#" class="community-link">🐛 Report Issue</a>
+                <a href="#" class="community-link" id="btn-community-chat">💬 Community Chat</a>
+            </div>
+        </section>
+    </main>
+
+    <!-- Modals -->
+    <div id="chat-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>OpenClaw Chat</h2>
+                <button class="btn-close" onclick="closeModal('chat-modal')">&times;</button>
+            </div>
+            <div class="chat-container">
+                <div class="messages" id="chat-messages"></div>
+                <div class="input-area">
+                    <input type="text" id="chat-input" placeholder="Type your message..." />
+                    <button class="btn-send" onclick="sendChatMessage()">Send</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="js/cockpit.js"></script>
+</body>
+</html>
