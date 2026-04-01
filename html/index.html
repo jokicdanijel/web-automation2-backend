@@ -1,0 +1,1201 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenClaw Dashboard - Web Automation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1e40af;
+            --secondary: #7c3aed;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --bg-primary: #ffffff;
+            --bg-secondary: #f9fafb;
+            --bg-tertiary: #f3f4f6;
+            --text-primary: #111827;
+            --text-secondary: #6b7280;
+            --text-tertiary: #9ca3af;
+            --border: #e5e7eb;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            background: var(--bg-primary);
+            border-right: 1px solid var(--border);
+            padding: 2rem 0;
+            overflow-y: auto;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .sidebar-header {
+            padding: 0 1.5rem 2rem;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 1.5rem;
+        }
+
+        .sidebar-logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-weight: 700;
+            font-size: 1.25rem;
+            color: var(--primary);
+        }
+
+        .sidebar-nav {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            padding: 0 1rem;
+        }
+
+        .nav-group {
+            margin-bottom: 2rem;
+        }
+
+        .nav-group-title {
+            padding: 0.75rem 1rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: var(--text-tertiary);
+            letter-spacing: 0.05em;
+        }
+
+        .nav-item {
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            color: var(--text-secondary);
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            user-select: none;
+        }
+
+        .nav-item:hover {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        .nav-item.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .nav-icon {
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Main Content */
+        .main {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: var(--bg-primary);
+            border-bottom: 1px solid var(--border);
+            padding: 1.5rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .header-title {
+            font-size: 1.875rem;
+            font-weight: 600;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: var(--bg-secondary);
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--success);
+        }
+
+        .status-dot.error {
+            background: var(--danger);
+        }
+
+        .content {
+            flex: 1;
+            padding: 2rem;
+            overflow-y: auto;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .tab {
+            padding: 1rem 1.5rem;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .tab:hover {
+            color: var(--text-primary);
+        }
+
+        .tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        .section {
+            display: none;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        .card {
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .card-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+        }
+
+        .card-subtitle {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-top: 0.25rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .form-input,
+        .form-textarea,
+        .form-select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            font-size: 0.95rem;
+            font-family: inherit;
+            transition: all 0.2s;
+        }
+
+        .form-input:focus,
+        .form-textarea:focus,
+        .form-select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 0.5rem;
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        .btn-secondary:hover {
+            background: var(--border);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #059669;
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+
+        .btn-small {
+            padding: 0.5rem 1rem;
+            font-size: 0.85rem;
+        }
+
+        .btn-block {
+            width: 100%;
+            justify-content: center;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Grid Layouts */
+        .grid {
+            display: grid;
+            gap: 1.5rem;
+        }
+
+        .grid-2 {
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        }
+
+        .grid-3 {
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        }
+
+        /* Metrics */
+        .metric {
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .metric-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .metric-label {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-top: 0.5rem;
+        }
+
+        /* Log Output */
+        .log-box {
+            background: #1f2937;
+            color: #d1d5db;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            max-height: 400px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .log-box.error {
+            background: #7f1d1d;
+            color: #fca5a5;
+        }
+
+        .log-box.success {
+            background: #064e3b;
+            color: #86efac;
+        }
+
+        /* Alert */
+        .alert {
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+            display: flex;
+            gap: 0.75rem;
+            align-items: flex-start;
+        }
+
+        .alert-icon {
+            width: 20px;
+            height: 20px;
+            flex-shrink: 0;
+        }
+
+        .alert-primary {
+            background: #dbeafe;
+            color: #1e40af;
+            border: 1px solid #93c5fd;
+        }
+
+        .alert-success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+        }
+
+        .alert-warning {
+            background: #fef3c7;
+            color: #92400e;
+            border: 1px solid #fcd34d;
+        }
+
+        .alert-danger {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+        }
+
+        /* Loading State */
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(37, 99, 235, 0.2);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Audio Controls */
+        .audio-controls {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            padding: 1rem;
+            background: var(--bg-secondary);
+            border-radius: 0.5rem;
+        }
+
+        .audio-player {
+            flex: 1;
+        }
+
+        audio {
+            width: 100%;
+            height: 40px;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .layout {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                display: none;
+            }
+
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .header {
+                flex-direction: column;
+                gap: 1rem;
+                align-items: flex-start;
+            }
+
+            .tabs {
+                overflow-x: auto;
+            }
+
+            .content {
+                padding: 1rem;
+            }
+
+            .card {
+                padding: 1rem;
+            }
+        }
+
+        /* Animation */
+        .fade-in {
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <span>⚙️</span>
+                    <span>OpenClaw</span>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="nav-group">
+                    <div class="nav-group-title">Hauptfunktionen</div>
+                    <div class="nav-item active" data-tab="dashboard">
+                        <span class="nav-icon">📊</span>
+                        <span>Dashboard</span>
+                    </div>
+                    <div class="nav-item" data-tab="automation">
+                        <span class="nav-icon">🤖</span>
+                        <span>Automatisierung</span>
+                    </div>
+                    <div class="nav-item" data-tab="forms">
+                        <span class="nav-icon">📋</span>
+                        <span>Formulare</span>
+                    </div>
+                    <div class="nav-item" data-tab="audio">
+                        <span class="nav-icon">🔊</span>
+                        <span>Audio & Sprache</span>
+                    </div>
+                    <div class="nav-item" data-tab="chat">
+                        <span class="nav-icon">💬</span>
+                        <span>Chat</span>
+                    </div>
+                </div>
+                <div class="nav-group">
+                    <div class="nav-group-title">System</div>
+                    <div class="nav-item" data-tab="status">
+                        <span class="nav-icon">📈</span>
+                        <span>Status & Monitoring</span>
+                    </div>
+                    <div class="nav-item" data-tab="settings">
+                        <span class="nav-icon">⚙️</span>
+                        <span>Einstellungen</span>
+                    </div>
+                </div>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <div class="main">
+            <header class="header">
+                <h1 class="header-title">OpenClaw Dashboard</h1>
+                <div class="header-actions">
+                    <div class="status-indicator">
+                        <div class="status-dot" id="statusDot"></div>
+                        <span id="statusText">Verbunden</span>
+                    </div>
+                </div>
+            </header>
+
+            <main class="content">
+                <!-- Dashboard Section -->
+                <section id="dashboard" class="section active fade-in">
+                    <div class="card">
+                        <div class="card-header">
+                            <div>
+                                <h2 class="card-title">Willkommen bei OpenClaw</h2>
+                                <p class="card-subtitle">Web-Automatisierungs- und Kontrollzentrum</p>
+                            </div>
+                        </div>
+                        <div class="grid grid-3">
+                            <div class="metric">
+                                <div class="metric-value" id="metricUptime">0h</div>
+                                <div class="metric-label">Uptime</div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-value" id="metricRequests">0</div>
+                                <div class="metric-label">Anfragen</div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-value" id="metricPerformance">97</div>
+                                <div class="metric-label">Performance</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">Verfügbare Features</h2>
+                        </div>
+                        <div class="grid grid-2">
+                            <div style="padding: 1.5rem; background: var(--bg-secondary); border-radius: 0.5rem;">
+                                <h3 style="font-size: 1rem; margin-bottom: 0.5rem;">🔗 Navigation</h3>
+                                <p style="color: var(--text-secondary); font-size: 0.875rem;">URLs öffnen und Seiten navigieren</p>
+                            </div>
+                            <div style="padding: 1.5rem; background: var(--bg-secondary); border-radius: 0.5rem;">
+                                <h3 style="font-size: 1rem; margin-bottom: 0.5rem;">🖱️ Interaktion</h3>
+                                <p style="color: var(--text-secondary); font-size: 0.875rem;">Klicks und Texteingaben automatisieren</p>
+                            </div>
+                            <div style="padding: 1.5rem; background: var(--bg-secondary); border-radius: 0.5rem;">
+                                <h3 style="font-size: 1rem; margin-bottom: 0.5rem;">📋 Formulare</h3>
+                                <p style="color: var(--text-secondary); font-size: 0.875rem;">Formularfelder erkennen und ausfüllen</p>
+                            </div>
+                            <div style="padding: 1.5rem; background: var(--bg-secondary); border-radius: 0.5rem;">
+                                <h3 style="font-size: 1rem; margin-bottom: 0.5rem;">🔊 Audio/Sprache</h3>
+                                <p style="color: var(--text-secondary); font-size: 0.875rem;">Text-zu-Sprache und Spracherkennung</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Automation Section -->
+                <section id="automation" class="section fade-in">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">Automatisierungs-Workflow</h2>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Workflow Name</label>
+                            <input type="text" class="form-input" id="workflowName" placeholder="z.B. 'Google Suche'">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Ziel-URL</label>
+                            <input type="url" class="form-input" id="automationUrl" placeholder="https://example.com">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Aktionen (JSON)</label>
+                            <textarea class="form-textarea" id="automationActions" placeholder='[
+  {"action": "navigate", "url": "https://google.com"},
+  {"action": "click", "selector": "input[name=q]"},
+  {"action": "type", "text": "OpenClaw"},
+  {"action": "click", "selector": "button[name=btnK]"},
+  {"action": "wait", "seconds": 2}
+]'></textarea>
+                        </div>
+                        <div id="automationLog" class="log-box" style="display: none; margin-bottom: 1rem;"></div>
+                        <button class="btn btn-primary btn-block" id="runAutomation">
+                            <span>▶️</span>
+                            <span>Workflow ausführen</span>
+                        </button>
+                    </div>
+                </section>
+
+                <!-- Forms Section -->
+                <section id="forms" class="section fade-in">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">Formularautomatisierung</h2>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">URL der Seite mit Formular</label>
+                            <input type="url" class="form-input" id="formUrl" placeholder="https://example.com/form">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Aktion</label>
+                            <select class="form-select" id="formAction">
+                                <option value="detect">Formulare erkennen</option>
+                                <option value="fill">Felder ausfüllen</option>
+                                <option value="submit">Absenden</option>
+                                <option value="clear">Leeren</option>
+                            </select>
+                        </div>
+                        <div class="form-group" id="fieldDataGroup" style="display: none;">
+                            <label class="form-label">Felddaten (JSON)</label>
+                            <textarea class="form-textarea" id="fieldData" placeholder='{"field1": "value1", "field2": "value2"}'></textarea>
+                        </div>
+                        <div id="formLog" class="log-box" style="display: none; margin-bottom: 1rem;"></div>
+                        <button class="btn btn-primary btn-block" id="executeFormAction">
+                            <span>⚡</span>
+                            <span>Formularaktion ausführen</span>
+                        </button>
+                    </div>
+                </section>
+
+                <!-- Audio & Speech Section -->
+                <section id="audio" class="section fade-in">
+                    <!-- Text to Speech -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">Text zu Sprache</h2>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Text zum Vorlesen</label>
+                            <textarea class="form-textarea" id="ttsText" placeholder="Geben Sie Text ein, der in Sprache umgewandelt werden soll...">Willkommen bei OpenClaw</textarea>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Sprache</label>
+                            <select class="form-select" id="ttsLanguage">
+                                <option value="de-DE">Deutsch</option>
+                                <option value="en-US">English (US)</option>
+                                <option value="en-GB">English (UK)</option>
+                                <option value="fr-FR">Français</option>
+                                <option value="es-ES">Español</option>
+                                <option value="it-IT">Italiano</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Stimme</label>
+                            <select class="form-select" id="ttsVoice">
+                                <option value="default">Standard</option>
+                                <option value="female">Weiblich</option>
+                                <option value="male">Männlich</option>
+                                <option value="neural">Neural</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-primary btn-block" id="generateTTS">
+                            <span>🎤</span>
+                            <span>Audio generieren</span>
+                        </button>
+                        <div class="audio-controls" id="audioPlayer" style="display: none; margin-top: 1rem;">
+                            <audio controls id="audioElement"></audio>
+                        </div>
+                    </div>
+
+                    <!-- Speech to Text -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">Sprache zu Text</h2>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Sprache</label>
+                            <select class="form-select" id="sttLanguage">
+                                <option value="de-DE">Deutsch</option>
+                                <option value="en-US">English (US)</option>
+                                <option value="en-GB">English (UK)</option>
+                                <option value="fr-FR">Français</option>
+                                <option value="es-ES">Español</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-primary btn-block" id="startRecording">
+                            <span>🎙️</span>
+                            <span>Aufnahme starten</span>
+                        </button>
+                        <button class="btn btn-danger btn-block" id="stopRecording" style="display: none;">
+                            <span>⏹️</span>
+                            <span>Aufnahme beenden</span>
+                        </button>
+                        <div id="transcriptionResult" style="display: none; margin-top: 1rem; padding: 1rem; background: var(--bg-secondary); border-radius: 0.5rem;">
+                            <p style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 0.5rem;">Erkannter Text:</p>
+                            <p id="transcriptionText" style="font-size: 1rem;"></p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Chat Section -->
+                <section id="chat" class="section fade-in">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">Chat mit Agent</h2>
+                        </div>
+                        <div id="chatMessages" style="height: 400px; overflow-y: auto; margin-bottom: 1rem; padding: 1rem; background: var(--bg-secondary); border-radius: 0.5rem;"></div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <input type="text" class="form-input" id="chatInput" placeholder="Geben Sie eine Nachricht ein...">
+                        </div>
+                        <button class="btn btn-primary btn-block" id="sendChat">
+                            <span>📤</span>
+                            <span>Senden</span>
+                        </button>
+                    </div>
+                </section>
+
+                <!-- Status Section -->
+                <section id="status" class="section fade-in">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">System Status</h2>
+                        </div>
+                        <div class="grid grid-2">
+                            <div>
+                                <h3 style="font-weight: 600; margin-bottom: 1rem;">Server Informationen</h3>
+                                <dl style="font-size: 0.95rem;">
+                                    <dt style="color: var(--text-secondary);">Status:</dt>
+                                    <dd style="margin-bottom: 1rem;">
+                                        <span class="status-dot"></span>
+                                        <span>Aktiv</span>
+                                    </dd>
+                                    <dt style="color: var(--text-secondary);">Uptime:</dt>
+                                    <dd style="margin-bottom: 1rem;" id="statusUptime">0 Sekunden</dd>
+                                    <dt style="color: var(--text-secondary);">Anfragen:</dt>
+                                    <dd style="margin-bottom: 1rem;" id="statusRequests">0</dd>
+                                    <dt style="color: var(--text-secondary);">Performance:</dt>
+                                    <dd id="statusPerformance">97%</dd>
+                                </dl>
+                            </div>
+                            <div>
+                                <h3 style="font-weight: 600; margin-bottom: 1rem;">Python Version</h3>
+                                <p id="pythonVersion" style="font-family: monospace; background: var(--bg-secondary); padding: 1rem; border-radius: 0.5rem;">Loading...</p>
+                            </div>
+                        </div>
+                        <button class="btn btn-secondary" id="refreshStatus" style="margin-top: 1rem;">
+                            <span>🔄</span>
+                            <span>Aktualisieren</span>
+                        </button>
+                    </div>
+                </section>
+
+                <!-- Settings Section -->
+                <section id="settings" class="section fade-in">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">Einstellungen</h2>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">API Key</label>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <input type="password" class="form-input" id="apiKey" placeholder="Geben Sie Ihren API Key ein" style="flex: 1;">
+                                <button class="btn btn-secondary btn-small" id="toggleApiKey">👁️</button>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Server URL</label>
+                            <input type="url" class="form-input" id="serverUrl" placeholder="http://localhost:8050">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Theme</label>
+                            <select class="form-select" id="themeSelect">
+                                <option value="light">Hell</option>
+                                <option value="dark">Dunkel</option>
+                                <option value="auto">Automatisch</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-primary btn-block" id="saveSettings">
+                            <span>💾</span>
+                            <span>Einstellungen speichern</span>
+                        </button>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const config = {
+            serverUrl: localStorage.getItem('serverUrl') || 'http://localhost:8050',
+            apiKey: localStorage.getItem('apiKey') || 'secret-123',
+            recordedAudio: null,
+            mediaRecorder: null
+        };
+
+        // Tab Navigation
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', function() {
+                const tabName = this.dataset.tab;
+                switchTab(tabName);
+            });
+        });
+
+        function switchTab(tabName) {
+            // Hide all sections
+            document.querySelectorAll('.section').forEach(sec => {
+                sec.classList.remove('active');
+            });
+            // Remove active class from nav items
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+
+            // Show selected section
+            const section = document.getElementById(tabName);
+            if (section) {
+                section.classList.add('active');
+            }
+
+            // Add active class to clicked nav item
+            document.querySelector(`.nav-item[data-tab="${tabName}"]`).classList.add('active');
+        }
+
+        // Automation
+        document.getElementById('runAutomation').addEventListener('click', async function() {
+            const workflowName = document.getElementById('workflowName').value;
+            const url = document.getElementById('automationUrl').value;
+            const actionsText = document.getElementById('automationActions').value;
+            const logBox = document.getElementById('automationLog');
+
+            if (!url || !actionsText) {
+                alert('Bitte füllen Sie alle erforderlichen Felder aus');
+                return;
+            }
+
+            try {
+                const actions = JSON.parse(actionsText);
+                logBox.style.display = 'block';
+                logBox.textContent = `[INFO] Starte Workflow: ${workflowName || 'Unnamed'}\n[INFO] URL: ${url}\n[INFO] Aktionen: ${actions.length}\n\n`;
+
+                // Send to API
+                const response = await fetch(`${config.serverUrl}/api/automation`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${config.apiKey}`
+                    },
+                    body: JSON.stringify({ workflow: actions, url: url })
+                });
+
+                if (response.ok) {
+                    logBox.textContent += '[SUCCESS] Workflow erfolgreich ausgeführt\n';
+                } else {
+                    logBox.textContent += `[ERROR] HTTP ${response.status}\n`;
+                }
+            } catch (error) {
+                logBox.style.display = 'block';
+                logBox.textContent += `[ERROR] ${error.message}\n`;
+                logBox.classList.add('error');
+            }
+        });
+
+        // Form Actions
+        document.getElementById('formAction').addEventListener('change', function() {
+            const fieldDataGroup = document.getElementById('fieldDataGroup');
+            fieldDataGroup.style.display = this.value === 'fill' ? 'block' : 'none';
+        });
+
+        document.getElementById('executeFormAction').addEventListener('click', async function() {
+            const url = document.getElementById('formUrl').value;
+            const action = document.getElementById('formAction').value;
+            const fieldData = document.getElementById('fieldData').value;
+            const logBox = document.getElementById('formLog');
+
+            if (!url) {
+                alert('Bitte geben Sie die URL ein');
+                return;
+            }
+
+            try {
+                logBox.style.display = 'block';
+                logBox.textContent = `[INFO] Formularaktion: ${action}\n[INFO] URL: ${url}\n\n`;
+
+                const payload = {
+                    action: action,
+                    url: url
+                };
+
+                if (action === 'fill' && fieldData) {
+                    payload.fields = JSON.parse(fieldData);
+                }
+
+                const response = await fetch(`${config.serverUrl}/api/form-automate`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${config.apiKey}`
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await response.json();
+                logBox.textContent += `[SUCCESS] ${JSON.stringify(data, null, 2)}\n`;
+            } catch (error) {
+                logBox.style.display = 'block';
+                logBox.textContent += `[ERROR] ${error.message}\n`;
+                logBox.classList.add('error');
+            }
+        });
+
+        // TTS
+        document.getElementById('generateTTS').addEventListener('click', async function() {
+            const text = document.getElementById('ttsText').value;
+            const language = document.getElementById('ttsLanguage').value;
+            const voice = document.getElementById('ttsVoice').value;
+
+            if (!text) {
+                alert('Bitte geben Sie Text ein');
+                return;
+            }
+
+            this.disabled = true;
+            const originalText = this.textContent;
+            this.innerHTML = '<span class="spinner"></span> <span>Generiere...</span>';
+
+            try {
+                const response = await fetch(`${config.serverUrl}/api/text-to-speech`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${config.apiKey}`
+                    },
+                    body: JSON.stringify({ text, language, voice })
+                });
+
+                const data = await response.json();
+                if (data.audio_url) {
+                    const audioPlayer = document.getElementById('audioPlayer');
+                    const audioElement = document.getElementById('audioElement');
+                    audioElement.src = `${config.serverUrl}${data.audio_url}`;
+                    audioPlayer.style.display = 'flex';
+                } else if (data.audioData) {
+                    const audioPlayer = document.getElementById('audioPlayer');
+                    const audioElement = document.getElementById('audioElement');
+                    audioElement.src = `data:audio/mp3;base64,${data.audioData}`;
+                    audioPlayer.style.display = 'flex';
+                }
+            } catch (error) {
+                alert(`Fehler: ${error.message}`);
+            } finally {
+                this.disabled = false;
+                this.innerHTML = originalText;
+            }
+        });
+
+        // STT
+        let audioChunks = [];
+
+        document.getElementById('startRecording').addEventListener('click', async function() {
+            audioChunks = [];
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                config.mediaRecorder = new MediaRecorder(stream);
+
+                config.mediaRecorder.ondataavailable = event => {
+                    audioChunks.push(event.data);
+                };
+
+                config.mediaRecorder.start();
+                document.getElementById('startRecording').style.display = 'none';
+                document.getElementById('stopRecording').style.display = 'inline-flex';
+            } catch (error) {
+                alert(`Fehler beim Starten der Aufnahme: ${error.message}`);
+            }
+        });
+
+        document.getElementById('stopRecording').addEventListener('click', async function() {
+            config.mediaRecorder.stop();
+            document.getElementById('stopRecording').style.display = 'none';
+            document.getElementById('startRecording').style.display = 'inline-flex';
+
+            config.mediaRecorder.onstop = async () => {
+                const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                const reader = new FileReader();
+
+                reader.onload = async (e) => {
+                    try {
+                        const base64Audio = e.target.result.split(',')[1];
+                        const language = document.getElementById('sttLanguage').value;
+
+                        const response = await fetch(`${config.serverUrl}/api/speech-to-text`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${config.apiKey}`
+                            },
+                            body: JSON.stringify({
+                                audio: base64Audio,
+                                audioFormat: 'wav',
+                                language: language
+                            })
+                        });
+
+                        const data = await response.json();
+                        const resultDiv = document.getElementById('transcriptionResult');
+                        const textDiv = document.getElementById('transcriptionText');
+
+                        resultDiv.style.display = 'block';
+                        textDiv.textContent = data.transcription || data.text || 'Keine Transkription verfügbar';
+                    } catch (error) {
+                        alert(`Fehler bei der Transkription: ${error.message}`);
+                    }
+                };
+
+                reader.readAsDataURL(audioBlob);
+            };
+        });
+
+        // Chat
+        document.getElementById('sendChat').addEventListener('click', async function() {
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+
+            if (!message) return;
+
+            const chatMessages = document.getElementById('chatMessages');
+
+            // Add user message
+            const userMsg = document.createElement('div');
+            userMsg.style.cssText = 'margin-bottom: 1rem; text-align: right;';
+            userMsg.innerHTML = `<div style="background: var(--primary); color: white; padding: 0.75rem; border-radius: 0.5rem; display: inline-block; max-width: 70%;">${escapeHtml(message)}</div>`;
+            chatMessages.appendChild(userMsg);
+
+            input.value = '';
+
+            try {
+                const response = await fetch(`${config.serverUrl}/api/chat`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${config.apiKey}`
+                    },
+                    body: JSON.stringify({ message })
+                });
+
+                const data = await response.json();
+                const assistantMsg = document.createElement('div');
+                assistantMsg.style.cssText = 'margin-bottom: 1rem;';
+                assistantMsg.innerHTML = `<div style="background: var(--bg-secondary); padding: 0.75rem; border-radius: 0.5rem; display: inline-block; max-width: 70%;">${escapeHtml(data.reply || 'Keine Antwort')}</div>`;
+                chatMessages.appendChild(assistantMsg);
+
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            } catch (error) {
+                const errorMsg = document.createElement('div');
+                errorMsg.style.cssText = 'margin-bottom: 1rem;';
+                errorMsg.innerHTML = `<div style="background: var(--bg-secondary); color: var(--danger); padding: 0.75rem; border-radius: 0.5rem;">Fehler: ${error.message}</div>`;
+                chatMessages.appendChild(errorMsg);
+            }
+        });
+
+        // Status
+        document.getElementById('refreshStatus').addEventListener('click', async function() {
+            try {
+                const response = await fetch(`${config.serverUrl}/api/status`, {
+                    headers: {
+                        'Authorization': `Bearer ${config.apiKey}`
+                    }
+                });
+
+                const data = await response.json();
+                document.getElementById('statusUptime').textContent = `${Math.floor(data.uptime_seconds / 3600)}h ${Math.floor((data.uptime_seconds % 3600) / 60)}m`;
+                document.getElementById('statusRequests').textContent = data.requests_total || 0;
+                document.getElementById('statusPerformance').textContent = `${data.performance_score || 97}%`;
+
+                // Update dashboard metrics
+                document.getElementById('metricUptime').textContent = `${Math.floor(data.uptime_seconds / 3600)}h`;
+                document.getElementById('metricRequests').textContent = data.requests_total || 0;
+                document.getElementById('metricPerformance').textContent = data.performance_score || 97;
+            } catch (error) {
+                console.error('Status error:', error);
+            }
+        });
+
+        // Settings
+        document.getElementById('toggleApiKey').addEventListener('click', function() {
+            const input = document.getElementById('apiKey');
+            input.type = input.type === 'password' ? 'text' : 'password';
+        });
+
+        document.getElementById('saveSettings').addEventListener('click', function() {
+            const apiKey = document.getElementById('apiKey').value;
+            const serverUrl = document.getElementById('serverUrl').value;
+
+            if (apiKey) localStorage.setItem('apiKey', apiKey);
+            if (serverUrl) localStorage.setItem('serverUrl', serverUrl);
+
+            config.apiKey = apiKey;
+            config.serverUrl = serverUrl;
+
+            alert('Einstellungen gespeichert!');
+        });
+
+        // Helper function
+        function escapeHtml(text) {
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, m => map[m]);
+        }
+
+        // Initialize
+        window.addEventListener('load', function() {
+            document.getElementById('apiKey').value = config.apiKey;
+            document.getElementById('serverUrl').value = config.serverUrl;
+            document.getElementById('refreshStatus').click();
+        });
+
+        // Allow Enter key in chat
+        document.getElementById('chatInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                document.getElementById('sendChat').click();
+            }
+        });
+    </script>
+</body>
+</html>
