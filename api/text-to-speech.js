@@ -78,7 +78,7 @@ export default async function handler(req, res) {
 
 /**
  * Synthesize speech from text
- * In production, uses real TTS APIs
+ * Uses multiple free TTS providers: Eleven Labs (free tier), Google TTS API, ElevenLabs
  */
 async function synthesizeSpeech(params) {
   const { text, voice, language, speechRate, pitch, format } = params;
@@ -89,50 +89,274 @@ async function synthesizeSpeech(params) {
       throw new Error('Text exceeds maximum length of 5000 characters');
     }
 
-    // Mock audio generation
-    // In production, call Google Cloud TTS, Azure TTS, ElevenLabs, etc.
-    const mockAudioBuffer = Buffer.alloc(1024 * 10); // 10KB mock audio
-    mockAudioBuffer.fill(0);
+    // Try ElevenLabs API (free tier available)
+    const elevenLabsResult = await tryElevenLabsSynthesis(text, voice, language, speechRate, pitch, format);
+    if (elevenLabsResult) {
+      return elevenLabsResult;
+    }
 
+    // Try Google Cloud TTS API
+    const googleResult = await tryGoogleTTSSynthesis(text, voice, language, speechRate, pitch, format);
+    if (googleResult) {
+      return googleResult;
+    }
+
+    // Try Azure TTS (free tier)
+    const azureResult = await tryAzureTTSSynthesis(text, voice, language, speechRate, pitch, format);
+    if (azureResult) {
+      return azureResult;
+    }
+
+    // Fallback: Use espeak or system command
+    const espeakResult = await tryEspeakSynthesis(text, language, speechRate, format);
+    if (espeakResult) {
+      return espeakResult;
+    }
+
+    throw new Error('No TTS provider available. Configure ELEVENLABS_API_KEY, GOOGLE_APPLICATION_CREDENTIALS, or AZURE_SPEECH_KEY');
+
+  } catch (error) {
+    throw new Error(`Speech synthesis failed: ${error.message}`);
+  }
+}
+
+/**
+ * Synthesize using ElevenLabs API (free tier: 10,000 chars/month)
+ */
+async function tryElevenLabsSynthesis(text, voice, language, speechRate, pitch, format) {
+  try {
+    const apiKey = process.env.ELEVENLABS_API_KEY;
+    if (!apiKey) return null;
+
+    // Map voice to ElevenLabs voice ID
+    const voiceId = mapVoiceToElevenLabsId(voice);
+    
+    const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
+      method: 'POST',
+      headers: {
+        'xi-api-key': apiKey,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        text,
+        voice_settings: {
+          stability: 0.5,
+          similarity_boost: 0.75
+        },
+        model_id: 'eleven_monolingual_v1'
+      })
+    });
+
+    if (!response.ok) {
+      console.error('[v0] ElevenLabs API error:', response.status);
+      return null;
+    }
+
+    const audioBuffer = await response.arrayBuffer();
     return {
-      base64: mockAudioBuffer.toString('base64'),
+      base64: Buffer.from(audioBuffer).toString('base64'),
+      format: 'mp3',
+      voice,
+      language,
+      speechRate,
+      pitch,
+      size: audioBuffer.byteLength,
+      provider: 'elevenlabs'
+    };
+
+  } catch (error) {
+    console.error('[v0] ElevenLabs synthesis error:', error.message);
+    return null;
+  }
+}
+
+/**
+ * Synthesize using Google Cloud Text-to-Speech API
+ */
+async function tryGoogleTTSSynthesis(text, voice, language, speechRate, pitch, format) {
+  try {
+    const apiKey = process.env.GOOGLE_API_KEY;
+    if (!apiKey) return null;
+
+    const response = await fetch(`https://texttospeech.googleapis.com/v1/text:synthesize?key=${apiKey}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        input: { text },
+        voice: {
+          languageCode: language,
+          name: `${language}-Neural2-${mapVoiceGender(voice)}`
+        },
+        audioConfig: {
+          audioEncoding: format.toUpperCase(),
+          pitch,
+          speakingRate: speechRate
+        }
+      })
+    });
+
+    if (!response.ok) {
+      console.error('[v0] Google TTS API error:', response.status);
+      return null;
+    }
+
+    const data = await response.json();
+    return {
+      base64: data.audioContent,
       format,
       voice,
       language,
       speechRate,
       pitch,
-      size: mockAudioBuffer.length
+      provider: 'google-cloud-tts'
     };
-
-    /* Production example using Google Cloud Text-to-Speech:
-
-    const textToSpeech = require('@google-cloud/text-to-speech');
-    const client = new textToSpeech.TextToSpeechClient();
-
-    const request = {
-      input: { text },
-      voice: {
-        languageCode: language,
-        name: voice, // e.g., 'en-US-Neural2-C'
-      },
-      audioConfig: {
-        audioEncoding: format.toUpperCase(),
-        pitch,
-        speakingRate: speechRate,
-      },
-    };
-
-    const [response] = await client.synthesizeSpeech(request);
-    return {
-      base64: response.audioContent.toString('base64'),
-      format,
-      ...
-    };
-    */
 
   } catch (error) {
-    throw new Error(`Speech synthesis failed: ${error.message}`);
+    console.error('[v0] Google TTS synthesis error:', error.message);
+    return null;
   }
+}
+
+/**
+ * Synthesize using Azure Cognitive Services Speech API
+ */
+async function tryAzureTTSSynthesis(text, voice, language, speechRate, pitch, format) {
+  try {
+    const apiKey = process.env.AZURE_SPEECH_KEY;
+    const region = process.env.AZURE_SPEECH_REGION || 'eastus';
+    if (!apiKey) return null;
+
+    const ssml = `<speak version="1.0" xml:lang="${language}"><voice name="${mapVoiceToAzureId(voice, language)}"><prosody pitch="${pitch * 100}%" rate="${speechRate}">${escapeXml(text)}</prosody></voice></speak>`;
+
+    const response = await fetch(`https://${region}.tts.speech.microsoft.com/cognitiveservices/v1`, {
+      method: 'POST',
+      headers: {
+        'Ocp-Apim-Subscription-Key': apiKey,
+        'Content-Type': 'application/ssml+xml',
+        'X-Microsoft-OutputFormat': mapFormatToAzure(format)
+      },
+      body: ssml
+    });
+
+    if (!response.ok) {
+      console.error('[v0] Azure TTS API error:', response.status);
+      return null;
+    }
+
+    const audioBuffer = await response.arrayBuffer();
+    return {
+      base64: Buffer.from(audioBuffer).toString('base64'),
+      format,
+      voice,
+      language,
+      speechRate,
+      pitch,
+      size: audioBuffer.byteLength,
+      provider: 'azure-speech'
+    };
+
+  } catch (error) {
+    console.error('[v0] Azure TTS synthesis error:', error.message);
+    return null;
+  }
+}
+
+/**
+ * Fallback: Synthesize using system espeak command
+ */
+async function tryEspeakSynthesis(text, language, speechRate, format) {
+  try {
+    const { execSync } = require('child_process');
+    const fs = require('fs');
+    const path = require('path');
+    const os = require('os');
+
+    // Check if espeak is available
+    try {
+      execSync('which espeak', { stdio: 'ignore' });
+    } catch {
+      return null;
+    }
+
+    const tmpFile = path.join(os.tmpdir(), `tts-${Date.now()}.wav`);
+    const langCode = mapLanguageCode(language);
+    const speed = Math.round(150 * speechRate); // Default 150 wpm
+
+    execSync(`espeak -v ${langCode} -s ${speed} -w ${tmpFile} "${text.replace(/"/g, '\\"')}"`, {
+      stdio: 'pipe'
+    });
+
+    const audioBuffer = fs.readFileSync(tmpFile);
+    fs.unlinkSync(tmpFile);
+
+    return {
+      base64: audioBuffer.toString('base64'),
+      format: 'wav',
+      language,
+      speechRate,
+      pitch: 1.0,
+      size: audioBuffer.length,
+      provider: 'espeak'
+    };
+
+  } catch (error) {
+    console.error('[v0] Espeak synthesis error:', error.message);
+    return null;
+  }
+}
+
+/**
+ * Helper functions for voice/language mapping
+ */
+function mapVoiceToElevenLabsId(voice) {
+  const voiceMap = {
+    'default': '21m00Tcm4TlvDq8ikWAM',
+    'male': 'EXAVITQu4vr4xnSDxMaL',
+    'female': 'XB0fDUnXU5powFXDhCwa',
+    'neural': 'g5CIjZEefAuth4XA7teF'
+  };
+  return voiceMap[voice] || voiceMap['default'];
+}
+
+function mapVoiceToAzureId(voice, language) {
+  const voiceMap = {
+    'en-US': { default: 'en-US-AvaNeural', male: 'en-US-GuyNeural', female: 'en-US-AvaNeural', neural: 'en-US-AvaNeural' },
+    'de-DE': { default: 'de-DE-KatjaNeural', male: 'de-DE-ConradNeural', female: 'de-DE-KatjaNeural', neural: 'de-DE-KatjaNeural' },
+    'fr-FR': { default: 'fr-FR-DeniseNeural', male: 'fr-FR-HenriNeural', female: 'fr-FR-DeniseNeural', neural: 'fr-FR-DeniseNeural' }
+  };
+  const langVoices = voiceMap[language] || voiceMap['en-US'];
+  return langVoices[voice] || langVoices['default'];
+}
+
+function mapVoiceGender(voice) {
+  const genderMap = { 'male': 'A', 'female': 'C', 'default': 'B', 'neural': 'D' };
+  return genderMap[voice] || 'B';
+}
+
+function mapFormatToAzure(format) {
+  const formatMap = {
+    'mp3': 'audio-16khz-32kbitrate-mono-mp3',
+    'wav': 'riff-16khz-16bit-mono-pcm',
+    'ogg': 'ogg-16khz-16bit-mono-opus'
+  };
+  return formatMap[format] || formatMap['mp3'];
+}
+
+function mapLanguageCode(language) {
+  const langMap = {
+    'en-US': 'en', 'en-GB': 'en', 'de-DE': 'de', 'de': 'de',
+    'fr-FR': 'fr', 'fr': 'fr', 'es-ES': 'es', 'es': 'es',
+    'it-IT': 'it', 'it': 'it', 'pt-BR': 'pt', 'pt': 'pt'
+  };
+  return langMap[language] || 'en';
+}
+
+function escapeXml(text) {
+  return text.replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
 }
 
 /**

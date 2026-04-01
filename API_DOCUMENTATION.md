@@ -2,7 +2,7 @@
 
 ## Overview
 
-This backend provides comprehensive automation capabilities for web tasks including workflow orchestration, form handling, and speech recognition/synthesis.
+This backend provides comprehensive automation capabilities for web tasks including workflow orchestration, form handling, speech recognition/synthesis, and real-time audio processing.
 
 ---
 
@@ -522,25 +522,253 @@ All endpoints return consistent error responses:
 
 ---
 
-## Deployment Notes
+## 5. Speech-to-Text (`/api/speech-to-text`)
 
-### Production Configuration
-- Integrate with real speech-to-text services (Google Cloud, Azure, AssemblyAI)
-- Implement rate limiting and authentication
-- Add request/response logging
-- Cache frequently used voice outputs
-- Use CDN for audio file delivery
+### Purpose
+Converts audio input to text transcription with support for multiple languages and providers.
 
-### Environment Variables
-```env
-# Speech Services
-GOOGLE_CLOUD_API_KEY=your_key_here
-AZURE_SPEECH_KEY=your_key_here
-ELEVENLABS_API_KEY=your_key_here
+### Endpoint
+```
+POST /api/speech-to-text
+```
+
+### Request Body
+```json
+{
+  "audio": "base64-encoded-audio-data",
+  "audioFormat": "wav",
+  "language": "en-US",
+  "includeConfidence": false
+}
+```
+
+### Response
+```json
+{
+  "success": true,
+  "transcription": "Hello, this is a test",
+  "language": "en-US",
+  "confidence": 0.95,
+  "duration": 2.5,
+  "wordCount": 5,
+  "provider": "groq-whisper",
+  "timestamp": "2024-01-15T10:30:00Z"
+}
+```
+
+### Supported Providers
+- **Groq Whisper** (Recommended) - Free, fast, accurate
+- **Deepgram** - Free tier: 600 min/month
+- Fallback to Web Speech API
+
+### Usage Example
+```bash
+curl -X POST http://localhost:3000/api/speech-to-text \
+  -H "Content-Type: application/json" \
+  -d '{
+    "audio": "SUQzBAAAAAAAI1...",
+    "language": "en-US"
+  }'
 ```
 
 ---
 
+## 6. Text-to-Speech (`/api/text-to-speech`)
+
+### Purpose
+Converts text to natural-sounding audio output with customizable voice, language, and speech parameters.
+
+### Endpoint
+```
+POST /api/text-to-speech
+```
+
+### Request Body
+```json
+{
+  "text": "Hello, this is a test",
+  "voice": "default",
+  "language": "en-US",
+  "speechRate": 1.0,
+  "pitch": 1.0,
+  "format": "mp3",
+  "returnBase64": true
+}
+```
+
+### Response
+```json
+{
+  "success": true,
+  "text": "Hello, this is a test",
+  "audioData": "SUQzBAAAAAAAI1...",
+  "dataUrl": "data:audio/mp3;base64,SUQzBAAAAAAAI1...",
+  "estimatedDuration": {
+    "seconds": 3,
+    "formatted": "0:03"
+  },
+  "provider": "elevenlabs",
+  "timestamp": "2024-01-15T10:30:00Z"
+}
+```
+
+### Supported Providers
+- **ElevenLabs** (Recommended) - Free: 10K chars/month
+- **Google Cloud TTS** - Free: 1M chars/month (trial)
+- **Azure Speech** - Free: 5 audio hours/month
+- **System espeak** - Unlimited, system-level
+
+### Voice Options
+- `default` - Natural, neutral voice
+- `male` - Deep male voice
+- `female` - High female voice
+- `neural` - Advanced neural voice
+
+### Usage Example
+```bash
+curl -X POST http://localhost:3000/api/text-to-speech \
+  -H "Content-Type: application/json" \
+  -d '{
+    "text": "Welcome to the system",
+    "voice": "female",
+    "language": "en-US",
+    "returnBase64": true
+  }'
+```
+
+---
+
+## 7. Audio Pipeline (`/api/audio-pipeline`)
+
+### Purpose
+Integrated audio processing supporting transcription, synthesis, and interactive conversation flows.
+
+### Endpoint
+```
+POST /api/audio-pipeline
+```
+
+### Actions
+
+#### Transcribe Action
+```json
+{
+  "action": "transcribe",
+  "audio": "base64-audio",
+  "audioFormat": "wav",
+  "language": "en-US"
+}
+```
+
+#### Synthesize Action
+```json
+{
+  "action": "synthesize",
+  "text": "Hello world",
+  "voice": "default",
+  "language": "en-US"
+}
+```
+
+#### Interactive Action (Full Conversation)
+```json
+{
+  "action": "interactive",
+  "audio": "base64-user-audio",
+  "text": "AI response text",
+  "language": "en-US"
+}
+```
+
+### Interactive Response
+```json
+{
+  "action": "interactive",
+  "input": {
+    "transcription": "What is the weather?",
+    "confidence": 0.92,
+    "language": "en-US"
+  },
+  "output": {
+    "text": "The weather is sunny",
+    "audioUrl": "/audio/speech.mp3",
+    "estimatedDuration": {
+      "seconds": 2,
+      "formatted": "0:02"
+    }
+  },
+  "timestamp": "2024-01-15T10:30:00Z"
+}
+```
+
+### Usage Example
+```bash
+# Interactive conversation
+curl -X POST http://localhost:3000/api/audio-pipeline \
+  -H "Content-Type: application/json" \
+  -d '{
+    "action": "interactive",
+    "audio": "SUQzBAAAAAAAI1...",
+    "text": "The forecast shows clear skies tomorrow",
+    "language": "en-US"
+  }'
+```
+
+---
+
+## Supported Languages
+
+All audio APIs support these language codes:
+
+| Language | Code |
+|----------|------|
+| English (US) | en-US |
+| English (UK) | en-GB |
+| German | de-DE |
+| French | fr-FR |
+| Spanish | es-ES |
+| Italian | it-IT |
+| Portuguese (Brazil) | pt-BR |
+
+---
+
+## Deployment Notes
+
+### Production Configuration
+- Integrate with real speech-to-text services (Groq, Deepgram)
+- Use premium TTS providers (ElevenLabs, Google Cloud, Azure)
+- Implement rate limiting and authentication
+- Add request/response logging
+- Cache frequently used voice outputs
+- Use CDN for audio file delivery
+- Monitor API usage and costs
+
+### Environment Variables
+```env
+# Speech-to-Text
+GROQ_API_KEY=your_groq_key_here
+DEEPGRAM_API_KEY=your_deepgram_key_here
+
+# Text-to-Speech
+ELEVENLABS_API_KEY=your_elevenlabs_key_here
+GOOGLE_API_KEY=your_google_key_here
+AZURE_SPEECH_KEY=your_azure_key_here
+AZURE_SPEECH_REGION=eastus
+
+# Base URL (for audio-pipeline)
+API_BASE_URL=http://localhost:3000
+```
+
+### Audio File Limits
+- **Maximum file size**: 25MB
+- **Maximum text length**: 5000 characters
+- **Audio formats**: WAV, MP3, OGG, WebM
+- **Sample rates**: 8kHz, 16kHz, 44.1kHz, 48kHz
+
+---
+
 ## Support & Contributing
+
+For detailed audio integration guides, see [AUDIO_INTEGRATION.md](./AUDIO_INTEGRATION.md)
 
 For issues or contributions, please refer to the main repository documentation.
