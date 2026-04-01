@@ -1,0 +1,91 @@
+version: '3.8'
+
+services:
+  # FastAPI Backend
+  openclaw-api:
+    build: .
+    container_name: openclaw-api
+    ports:
+      - "8000:8000"
+    environment:
+      - DEBUG=True
+      - PYTHONUNBUFFERED=1
+      - DATABASE_URL=postgresql://openclaw:openclaw@postgres:5432/openclaw
+      - REDIS_URL=redis://redis:6379/0
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - GROQ_API_KEY=${GROQ_API_KEY}
+      - ELEVENLABS_API_KEY=${ELEVENLABS_API_KEY}
+    volumes:
+      - ./:/app
+      - ./logs:/app/logs
+      - ./data:/app/data
+    depends_on:
+      - postgres
+      - redis
+    command: python main.py
+    networks:
+      - openclaw-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: openclaw-postgres
+    environment:
+      POSTGRES_USER: openclaw
+      POSTGRES_PASSWORD: openclaw
+      POSTGRES_DB: openclaw
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - openclaw-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U openclaw"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: openclaw-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - openclaw-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Telegram Bot (optional separate service)
+  telegram-bot:
+    build: .
+    container_name: openclaw-telegram
+    environment:
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - API_BASE_URL=http://openclaw-api:8000
+    volumes:
+      - ./logs:/app/logs
+    depends_on:
+      - openclaw-api
+    command: python telegram_bot_refactored.py
+    networks:
+      - openclaw-network
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  openclaw-network:
+    driver: bridge
